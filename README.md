@@ -1,5 +1,27 @@
-# CarND-Controls-PID
-Self-Driving Car Engineer Nanodegree Program
+# CarND-Controls-PID project
+**_ By Aravind Pillarisetti_**
+
+## Introduction
+This project implements a PID controller to control a car running on simulator track. The controller ensures that the car follows the track with minimal steer. To this effect, the PID parameters must be tuned and ensure minimal cross track error.
+
+## Discussion Points
+### Describe the effect of the P, I, D parameters had in my implementation
+The proportional parameter, P, had the most effect on the car behavior. Obviously, because it effect the car's steer proportionally to the CTE.
+
+The differential parameter, D, had the second most effect. It has the smoothing on the proportional change.
+
+The integral parameter, I, is used to conter-act any bias in the steering. However, in the simulator car it had minimal effect when the car was moving in straight path. Its impact was most felt when going around curves.
+
+### Describe how the final parameters were chosen
+
+I started with the Ki, Kp and Kd from the lesson. This failed miserably, as the I parameter of 0.04 was fairly large and caused the car to go off the track right away. So, I reduced the Ki by a factor. This helped the car to drive more or less around the track at 30mph. Then, I implemented a twiddle alogorithm to help me fine-tune the parameters. My final parameters were
+**[_Kp_:0.14497, _Ki_: 0.00027, _Kd_:3.3715]**
+
+#### Twiddle
+Twiddle allows to do a parameter sweep of the PID parameters. I choose a step size of around 100 initially. However, this led to rapid changes in the parameters causing the car to wobble around. So, I increased the step incrementally till I finally reached around 4000... which was roughly equivalent to one full lap of the track. I let the twiddle run for 100 iterations (4000 x 100 steps), to arrive at my final parameters.
+
+### Experiments with higher speed
+I implemented the throttle PID controller to maximize the car speed across track. The throttle controller does not have an I component as it does not need to integrate over the CTE. I was able to drive around with a speed of 55 mph.. but it did have some nicks.
 
 ---
 

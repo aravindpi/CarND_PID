@@ -32,10 +32,39 @@ int main()
 {
   uWS::Hub h;
 
-  PID pid;
-  // TODO: Initialize the pid variable.
+  PID pid_steering;
+  PID pid_throttle;
+  
+  // Initialize the pid variables.
+  // Attempt #1: start with gains from the video
+  pid_steering.Init(0.2, 0.004, 3.0); // This failed miserably
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  // Attempt #2: Reduce Ki gain by a factor
+  pid_steering.Init(0.2, 0.0002, 3.0); 
+
+  // Attempt #3: Update Kp & Kd of steering based on twiddle.
+  //             Make Ki smaller. Seems to have no effect
+  //             Add pid for throttle and stay speed at 30 mph
+  pid_steering.Init(0.242, 0.00022, 3.427); 
+  pid_throttle.Init(0.2, 0.00004, 0.2);  
+
+  // Attempt #4: Update steering gains based on twiddel
+  //             update throttle gains based on twiddle
+  pid_steering.Init(0.27143, 0.000242, 3.767); 
+  pid_throttle.Init(0.2243, 0.0, 0.022);
+
+  // Attempt #5: Adjust gains based on twiddle
+  //             Increase speed to 55 mph
+  pid_steering.Init(0.135, 0.00026, 3.12); 
+  pid_throttle.Init(0.24795, 0.0, 0.023);
+
+  // Attempt #6: Adjust gains based on twiddle
+  //             Stay speed at 55 mph
+  pid_steering.Init(0.14497, 0.00027, 3.3715); 
+  pid_throttle.Init(0.3588, 0.0, 0.0253);
+  
+
+  h.onMessage([&pid_steering, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -50,22 +79,28 @@ int main()
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
-          double steer_value;
+          double steer_value, throttle_value;
           /*
-          * TODO: Calcuate steering value here, remember the steering value is
+          * Calcuate steering value here, remember the steering value is
           * [-1, 1].
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
+	  pid_steering.UpdateError(cte);
+          steer_value = -pid_steering.TotalError();
+
+	  pid_throttle.UpdateError(fabs(cte));
+	  throttle_value = 0.3; //0.55 - pid_throttle.TotalError();
+	  
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+	  //std::cout << "CTE: " << cte << " Throttle Value: " << throttle_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle_value;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          //std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {

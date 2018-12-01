@@ -1,6 +1,8 @@
 #ifndef PID_H
 #define PID_H
 
+#include <vector>
+
 class PID {
 public:
   /*
@@ -41,6 +43,16 @@ public:
   * Calculate the total PID error.
   */
   double TotalError();
+
+ private:
+  double prev_cte;
+  int step;
+  double run_error;
+  double best_error;
+  std::vector<double> dp;
+  int paramIdx;
+  bool dpIncreased;
+  bool dpDecreased;
 };
 
 #endif /* PID_H */
